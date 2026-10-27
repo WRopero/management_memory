@@ -14,7 +14,7 @@ services:
       - -listenip=0.0.0.0
       - -allowfrom=mm_app
       # el proxy ya ancla la expresion (^...$): no añadir anclajes propios
-      - '-allowGET=(/v[0-9.]+)?/containers/(json|[a-f0-9]{12,64}/(json|logs|stats))'
+      - '-allowGET=(/v[0-9.]+)?/(containers/(json|[a-f0-9]{12,64}/(json|logs|stats))|info|system/df)'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     read_only: true
@@ -38,6 +38,8 @@ services:
       STORAGE_DIR: /cognee-storage
       OBSERVER_LOG: /observer/observer-events.log
       REGISTRY_FILE: /state/registry.json
+      USAGE_FILE: /state/usage.jsonl
+      HOST_FILE: /state/host.json
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

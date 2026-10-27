@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import cognee_client as cognee
-from . import config, dockerapi, kb, observer, otel, pg, storage, vectors
+from . import config, dockerapi, kb, observer, otel, pg, resources, storage, usage, vectors
 
 app = FastAPI(title="Inspector de memoria", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -222,6 +222,16 @@ def otel_summary(days: int | None = Query(None, ge=1, le=365), project: str | No
 @app.get("/api/observer")
 def observer_summary():
     return {**observer.summary(), "health": observer.health()}
+
+
+@app.get("/api/usage")
+def api_usage(days: int = Query(14, ge=1, le=90), project: str | None = None):
+    return usage.summary(days, project)
+
+
+@app.get("/api/resources")
+def api_resources():
+    return {"host": resources.host(), "docker": resources.docker()}
 
 
 @app.get("/api/registry")
