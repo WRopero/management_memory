@@ -449,10 +449,10 @@ pages.recursos = { title: "Recursos del equipo", sub: "Cuánta carga tiene tu Ma
   const load = async () => {
     try {
       const r = await api("/resources"), hs = r.host, dk = r.docker, parts = [];
-      if (!hs.available) parts.push(h("div", { class: "callout" }, icon("alert", 20), h("div", {}, h("b", {}, "Sin datos del Mac"), h("p", {}, "Un contenedor no puede ver el Mac, así que un pequeño servicio lo mide cada 30 s. Instálalo con: ~/Documents/Developer/agents_memory_system/scripts/host_stats_launchagent.sh install"))));
+      if (!hs.available) parts.push(...section("Tu Mac", "Solo se mide cuando tú lo pides: no hay ningún proceso midiendo en segundo plano."), h("div", { class: "card row" }, h("div", {}, h("b", {}, "Sin medición todavía"), h("div", { class: "muted small" }, "Pulsa el botón para tomar una foto de CPU, memoria, disco y programas (tarda ~2 s).")), h("span", { class: "spacer" }), measureBtn()));
       else {
         const L = hs.latest, m = L.memory, cpu = L.cpu ? L.cpu.used : null;
-        parts.push(...section(`Tu Mac · ${L.model} · macOS ${L.os}`, `Última muestra ${hs.age_s < 90 ? "hace instantes" : `hace ${Math.round(hs.age_s / 60)} min${hs.age_s > 180 ? " (el servicio de muestreo parece detenido)" : ""}`} · encendido hace ${Math.round((L.uptime_s || 0) / 3600)} h${L.battery ? ` · batería ${L.battery.pct} % (${L.battery.on_ac ? "conectado" : "con batería"})` : ""}`));
+        parts.push(h("div", { class: "row", style: "margin-top:26px" }, h("div", {}, h("h2", { style: "margin:0" }, `Tu Mac · ${L.model} · macOS ${L.os}`), h("p", { class: "hint", style: "margin:2px 0 0" }, `Medido ${hs.age_s < 90 ? "hace instantes" : `hace ${Math.round(hs.age_s / 60)} min`} (foto puntual, no en vivo) · encendido hace ${Math.round((L.uptime_s || 0) / 3600)} h${L.battery ? ` · batería ${L.battery.pct} % (${L.battery.on_ac ? "conectado" : "con batería"})` : ""}`)), h("span", { class: "spacer" }), measureBtn()));
         parts.push(h("div", { class: "grid" },
           h("div", { class: "card" }, meter(cpu, "Procesador (CPU)", `${L.cpu_count} núcleos · usuario ${L.cpu?.user ?? "—"} % · sistema ${L.cpu?.sys ?? "—"} %`)),
           h("div", { class: "card" }, meter((100 * m.used) / m.total, "Memoria (RAM)", `${bytes(m.used)} de ${bytes(m.total)} · comprimida ${bytes(m.compressed)}`)),
@@ -461,8 +461,8 @@ pages.recursos = { title: "Recursos del equipo", sub: "Cuánta carga tiene tu Ma
           kpi({ label: "Carga del sistema", value: L.load[0].toFixed(2), meta: `5 min ${L.load[1].toFixed(2)} · 15 min ${L.load[2].toFixed(2)}`, tip: "Procesos esperando CPU. Si es mayor que el número de núcleos de forma sostenida, el Mac está saturado." }),
           kpi({ label: "Presión de memoria", value: m.free_pct == null ? "—" : `${m.free_pct} % libre`, meta: m.free_pct != null && m.free_pct < 20 ? "Alta: el Mac está justo de memoria" : "Normal", tip: "Medida de macOS: cuanta más memoria libre, mejor." })));
         parts.push(h("div", { class: "grid two", style: "margin-top:14px" },
-          h("div", { class: "card" }, h("h3", {}, "CPU (últimas horas)"), lineChart(hs.history.map((x) => x.cpu ?? 0), { max: 100, label: "CPU" })),
-          h("div", { class: "card" }, h("h3", {}, "Memoria usada (últimas horas)"), lineChart(hs.history.map((x) => (100 * x.mem_used) / m.total), { max: 100, label: "Memoria" }))));
+          h("div", { class: "card" }, h("h3", {}, "CPU en tus mediciones"), lineChart(hs.history.map((x) => x.cpu ?? 0), { max: 100, label: "CPU" })),
+          h("div", { class: "card" }, h("h3", {}, "Memoria en tus mediciones"), lineChart(hs.history.map((x) => (100 * x.mem_used) / m.total), { max: 100, label: "Memoria" }))));
         parts.push(h("div", { class: "grid two", style: "margin-top:14px" },
           h("div", {}, h("h3", {}, "Quién gasta más CPU"), table([{ t: "Programa", k: "name" }, { t: "CPU", n: 1, f: (p) => `${p.cpu.toFixed(1)} %` }, { t: "Procesos", n: 1, k: "n" }], L.procs.by_cpu)),
           h("div", {}, h("h3", {}, "Quién gasta más memoria"), table([{ t: "Programa", k: "name" }, { t: "Memoria", n: 1, f: (p) => bytes(p.rss) }, { t: "Procesos", n: 1, k: "n" }], L.procs.by_mem))));
@@ -484,10 +484,10 @@ pages.recursos = { title: "Recursos del equipo", sub: "Cuánta carga tiene tu Ma
       body.replaceChildren(...parts);
     } catch (e) { body.replaceChildren(fail(e)); }
   };
+  const measureBtn = () => h("button", { onclick: async (e) => { const b = e.currentTarget; b.disabled = true; b.textContent = "Midiendo…"; try { await api("/resources/host", { method: "POST" }); } catch (x) { alert(x.message); } load(); } }, "Medir el Mac ahora");
   body.replaceChildren(loading()); setTimeout(load, 0);
-  const timer = setInterval(() => { if (location.hash !== "#recursos") clearInterval(timer); else load(); }, 15000);
-  return h("div", {}, intro("¿Qué estoy viendo?", "La carga real de la máquina donde corre todo: tu Mac (procesador, memoria, disco) y Docker (la mini‑máquina que ejecuta la memoria y sus contenedores). Sirve para saber si hay margen, si algo está saturando el equipo y cuánto espacio ocupan los datos. Se actualiza solo cada 15 segundos.",
-    "Los datos del Mac los toma un servicio ligero (host_stats.py, cada 30 s) porque un contenedor no puede ver el Mac. Los de Docker vienen del propio motor, por un proxy de solo lectura."), body);
+  return h("div", {}, intro("¿Qué estoy viendo?", "La carga real de la máquina donde corre todo: tu Mac (procesador, memoria, disco) y Docker (la mini‑máquina que ejecuta la memoria y sus contenedores). Sirve para saber si hay margen, si algo está saturando el equipo y cuánto espacio ocupan los datos. Docker se lee al abrir la página; el Mac solo se mide cuando pulsas «Medir el Mac ahora». No hay nada midiendo en segundo plano, así que no ralentiza tu equipo.",
+    "Un contenedor no puede ver el Mac, así que al pulsar el botón el panel le pide a launchd que ejecute host_stats.py una sola vez (~2 s) y termine. En reposo no hay ningún proceso ni consumo. Los datos de Docker vienen del propio motor, por un proxy de solo lectura."), body);
 } };
 
 pages.guia = { title: "Guía y glosario", sub: "Todo lo que necesitas para leer este panel.", icon: "info", run: async () => h("div", {},
@@ -501,7 +501,7 @@ pages.guia = { title: "Guía y glosario", sub: "Todo lo que necesitas para leer 
     h("li", {}, h("b", {}, "Cognee lo corta en fragmentos, "), "calcula sus vectores en local y pide a Claude (vía el observer) resúmenes y conceptos: aquí se gastan tokens."),
     h("li", {}, h("b", {}, "Se guardan los vectores "), "en PostgreSQL y el grafo en su propio archivo."),
     h("li", {}, h("b", {}, "Cuando Claude Code pregunta algo, "), "la pregunta se convierte en un vector y se devuelven los fragmentos más cercanos (sin gastar tokens)."))),
-  ...section("Qué hace cada sección"), h("div", { class: "grid two" }, [["Resumen", "Salud y números clave."], ["Bases de conocimiento", "Tamaño y costo por proyecto; avisos para decidir qué compactar."], ["Vectores", "Qué huellas se guardan y cuánto pesan."], ["Grafo", "El mapa de conceptos."], ["PostgreSQL", "La base de datos, en solo lectura."], ["Búsqueda", "Prueba la recuperación."], ["Uso de la memoria", "Cuándo se consulta y si responde: prueba de que funciona."], ["Recursos del equipo", "Carga del Mac y de Docker."], ["Tokens y costo", "Consumo de IA, de tres fuentes."], ["API y contenedores", "Quién llama a Cognee y salud de los servicios."]].map(([a, b]) => h("div", { class: "card" }, h("b", {}, a), h("div", { class: "muted" }, b)))),
+  ...section("Qué hace cada sección"), h("div", { class: "grid two" }, [["Resumen", "Salud y números clave."], ["Bases de conocimiento", "Tamaño y costo por proyecto; avisos para decidir qué compactar."], ["Vectores", "Qué huellas se guardan y cuánto pesan."], ["Grafo", "El mapa de conceptos."], ["PostgreSQL", "La base de datos, en solo lectura."], ["Búsqueda", "Prueba la recuperación."], ["Uso de la memoria", "Cuándo se consulta y si responde: prueba de que funciona."], ["Recursos del equipo", "Foto de la carga del Mac (bajo demanda) y de Docker."], ["Tokens y costo", "Consumo de IA, de tres fuentes."], ["API y contenedores", "Quién llama a Cognee y salud de los servicios."]].map(([a, b]) => h("div", { class: "card" }, h("b", {}, a), h("div", { class: "muted" }, b)))),
   ...section("Glosario"), h("div", { class: "card" }, h("dl", { class: "gloss" }, GLOSSARY.flatMap(([t, d]) => [h("dt", {}, t), h("dd", {}, d)])))) };
 
 /* ── navegación y tema ── */

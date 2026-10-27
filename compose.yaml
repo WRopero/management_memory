@@ -39,7 +39,7 @@ services:
       OBSERVER_LOG: /observer/observer-events.log
       REGISTRY_FILE: /state/registry.json
       USAGE_FILE: /state/usage.jsonl
-      HOST_FILE: /state/host.json
+      HOST_AGENT_URL: http://host.docker.internal:8018
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

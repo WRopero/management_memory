@@ -30,11 +30,11 @@ open http://127.0.0.1:45876
 Si el navegador muestra una versión vieja tras reconstruir: recarga forzada (`Cmd+Shift+R`).
 
 ## Qué muestra cada sección
-Resumen · Bases de conocimiento (por proyecto/dataset, costo de reconstruir, documentos que más pesan, avisos) · Vectores (qué se guarda y dónde) · Grafo · PostgreSQL (explorador + consola SELECT) · Búsqueda (prueba de recuperación) · **Uso de la memoria** (cuándo se inyecta el briefing y cuándo se consulta, con resultado y veredicto «¿funciona?») · **Recursos del equipo** (CPU/RAM/swap/disco del Mac y de Docker, en vivo) · Tokens y costo · API y contenedores · Sincronización · Guía y glosario (explica cada concepto en lenguaje llano).
+Resumen · Bases de conocimiento (por proyecto/dataset, costo de reconstruir, documentos que más pesan, avisos) · Vectores (qué se guarda y dónde) · Grafo · PostgreSQL (explorador + consola SELECT) · Búsqueda (prueba de recuperación) · **Uso de la memoria** (cuándo se inyecta el briefing y cuándo se consulta, con resultado y veredicto «¿funciona?») · **Recursos del equipo** (CPU/RAM/swap/disco del Mac bajo demanda y de Docker) · Tokens y costo · API y contenedores · Sincronización · Guía y glosario (explica cada concepto en lenguaje llano).
 
 ## Datos que vienen del Mac (servicios ligeros, en `agents_memory_system`)
 - **Uso de la memoria**: `scripts/usage_scan.py` lee los transcripts de Claude Code (solo lectura, solo metadatos) y escribe `view/usage.jsonl`; se refresca al cerrar cada sesión (hook) o a mano.
-- **Recursos del equipo**: un contenedor no ve el Mac, así que `scripts/host_stats.py` (LaunchAgent `host_stats_launchagent.sh install`, cada 30 s) escribe `view/host.json`. Docker se lee del motor por el proxy de solo lectura (`/info`, `/system/df`).
+- **Recursos del equipo**: un contenedor no ve el Mac. `scripts/host_stats_launchagent.sh install` registra una activación por socket de launchd (`127.0.0.1:8018`): **no hay proceso residente**; solo al pulsar «Medir el Mac ahora» launchd ejecuta `host_stats.py --inetd` una vez (~2 s). Docker se lee del motor por el proxy de solo lectura (`/info`, `/system/df`).
 
 ## Tokens: qué se mide y qué no
 1. **Observer** (`~/.cognee-plugin/observer`): todo lo que Cognee gasta al indexar. Completo.

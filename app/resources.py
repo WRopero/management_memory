@@ -1,5 +1,4 @@
 """Recursos del equipo: el Mac (muestras de `host_stats.py`) y Docker (motor, VM, contenedores, disco). Solo lectura."""
-import json
 import time
 
 import httpx
@@ -7,14 +6,29 @@ import httpx
 from . import config, dockerapi
 
 
-def host() -> dict:
+_history: list[dict] = []   # mediciones de esta sesion del panel (en memoria; nada se escribe a disco)
+_last: dict | None = None
+
+
+def measure_host() -> dict:
+    """Pide UNA medicion del Mac al disparador bajo demanda de launchd (host_stats.py --inetd)."""
+    global _last
     try:
-        with open(config.HOST_FILE, encoding="utf-8") as fh:
-            d = json.load(fh)
-    except (OSError, json.JSONDecodeError):
-        return {"available": False}
-    latest = d.get("latest") or {}
-    return {"available": True, "age_s": round(time.time() - latest.get("ts", 0)), "latest": latest, "history": d.get("history", [])[-240:]}
+        r = httpx.post(config.HOST_AGENT_URL + "/", headers={"Host": "host.docker.internal:8018"}, timeout=20)
+        r.raise_for_status()
+        s = r.json()
+    except (httpx.HTTPError, ValueError) as e:
+        return {"available": False, "error": "El disparador del Mac no responde. Instálalo con: scripts/host_stats_launchagent.sh install (" + str(e)[:120] + ")"}
+    _last = s
+    _history.append({"ts": s["ts"], "cpu": (s.get("cpu") or {}).get("used"), "mem_used": s["memory"]["used"], "swap_used": s["memory"]["swap_used"]})
+    del _history[:-120]
+    return host()
+
+
+def host() -> dict:
+    if not _last:
+        return {"available": False, "measured": False}
+    return {"available": True, "measured": True, "age_s": round(time.time() - _last["ts"]), "latest": _last, "history": list(_history)}
 
 
 def docker() -> dict:

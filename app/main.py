@@ -234,6 +234,12 @@ def api_resources():
     return {"host": resources.host(), "docker": resources.docker()}
 
 
+@app.post("/api/resources/host")
+def api_resources_host():
+    """Una medición del Mac bajo demanda (sin proceso residente en el Mac)."""
+    return resources.measure_host()
+
+
 @app.get("/api/registry")
 def registry():
     return observer.registry()
