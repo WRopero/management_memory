@@ -101,7 +101,7 @@ def _flags(name, kind, docs, reg, cols, registry_rows, project) -> list[dict]:
     vb = sum(c["bytes_total"] for c in cols)
     edge = next((c for c in cols if c["table"] == "EdgeType_relationship_name"), None)
     if edge and vb and edge["bytes_total"] / vb > 0.4:
-        out.append({"level": "tip", "code": "aristas_dominan", "text": f"Los vectores de tipos de relación pesan {round(100 * edge['bytes_total'] / vb)}% de los vectores ({edge['rows']} filas para pocas relaciones distintas): es la primera candidata si hay que compactar."})
+        out.append({"level": "tip", "code": "aristas_dominan", "text": f"Los vectores de tipos de relación pesan {round(100 * edge['bytes_total'] / vb)}% de los vectores (cada conexión del grafo genera su propio vector con una frase descriptiva): es la primera candidata si hay que compactar."})
     chunk_counts = [d["chunks"] for d in docs if d["chunks"]]
     if len(chunk_counts) >= 4:
         med = statistics.median(chunk_counts)

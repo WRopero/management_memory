@@ -113,11 +113,11 @@ const COLLECTION = {
   TextDocument_name: ["Nombres de documentos", "Un vector por documento."],
   Entity_name: ["Conceptos detectados", "Módulos, reglas, decisiones… que Claude extrajo de los textos (nodos del grafo)."],
   EntityType_name: ["Categorías de conceptos", "Los tipos a los que pertenecen los conceptos (p. ej. «módulo», «regla»)."],
-  EdgeType_relationship_name: ["Nombres de relaciones del grafo", "Un vector por conexión entre conceptos, aunque el nombre se repita (contiene, es_un…)."],
+  EdgeType_relationship_name: ["Descripciones de las conexiones del grafo", "Un vector por cada conexión entre conceptos, con una frase que la describe («X menciona Y», «X es parte de Z»). Solo sirven para búsquedas sobre el grafo, no para la búsqueda por fragmentos."],
   SessionQAVector_text: ["Preguntas y respuestas de sesiones", "Conversaciones guardadas en el grafo."],
 };
 const ADVICE = {
-  aristas_dominan: ["Las relaciones del grafo ocupan casi todo el espacio de vectores", "Son vectores auxiliares del grafo (el nombre de cada conexión, repetido muchas veces), no tus documentos. La búsqueda por fragmentos no los usa. Si algún día necesitas ahorrar espacio, es lo primero a mirar; hoy es solo un dato."],
+  aristas_dominan: ["Las relaciones del grafo ocupan casi todo el espacio de vectores", "Cada conexión del grafo guarda su propia frase descriptiva como vector (son todas distintas, no hay duplicados). No son tus documentos y la búsqueda por fragmentos (CHUNKS, la que usamos) no los consulta. Si algún día necesitas ahorrar espacio es lo primero a mirar, pero hoy son solo unos MB."],
   sin_ann: ["Sin índice de búsqueda rápida (ANN)", "La búsqueda compara con todos los vectores (exacta). Con cientos o miles de filas es instantánea. Solo habría que crear un índice con decenas de miles. No es un problema hoy."],
   sesiones: ["Historia de sesiones", "Cada cierre de sesión guarda un resumen con ~3 llamadas a Claude. Revisa en «Tokens y costo» si compensa lo que gastas frente a lo que te aporta."],
   vacio: ["Dataset vacío", "No contiene documentos: puedes eliminarlo sin perder nada."],
