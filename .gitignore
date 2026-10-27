@@ -1,0 +1,7 @@
+.env
+*.env
+!*.example.env
+__pycache__/
+.pytest_cache/
+static/vendor/
+.DS_Store

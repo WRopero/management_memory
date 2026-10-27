@@ -1,0 +1,75 @@
+name: management_memory
+
+# Management Memory: UI interna de SOLO LECTURA para inspeccionar el stack de memoria (Cognee).
+# Se une a la red y a los volumenes del stack `agents_memory_system` (externos, en solo lectura).
+
+services:
+  mm_docker_proxy:
+    # Proxy minimo del socket de Docker: solo GET de lista/inspeccion/logs/stats de contenedores.
+    image: wollomatic/socket-proxy:1.11.0
+    restart: unless-stopped
+    user: "0:0"   # dueño del socket en Docker Desktop; sin capacidades (cap_drop ALL) y solo GET permitidos
+    command:
+      - -loglevel=INFO
+      - -listenip=0.0.0.0
+      - -allowfrom=mm_app
+      # el proxy ya ancla la expresion (^...$): no añadir anclajes propios
+      - '-allowGET=(/v[0-9.]+)?/containers/(json|[a-f0-9]{12,64}/(json|logs|stats))'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [mm_internal]
+
+  mm_app:
+    build: .
+    restart: unless-stopped
+    user: "10001:10001"   # el collector escribe otlp*.json como uid 10001 (modo 0600)
+    env_file: .env
+    environment:
+      COGNEE_API_URL: http://agents_cognee_api:8000
+      COGNEE_MCP_URL: http://agents_cognee_mcp:8000
+      INSPECTOR_PG_HOST: agents_postgres
+      OBSERVER_URL: http://host.docker.internal:8017
+      DOCKER_PROXY_URL: http://mm_docker_proxy:2375
+      STACK_PROJECT: agents_memory_system
+      TELEMETRY_DIR: /telemetry
+      STORAGE_DIR: /cognee-storage
+      OBSERVER_LOG: /observer/observer-events.log
+      REGISTRY_FILE: /state/registry.json
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${MM_PORT:-45876}:8080"
+    volumes:
+      - agents_graph_data:/cognee-storage:ro
+      - agents_telemetry_raw:/telemetry:ro
+      - ${HOME}/.cognee-plugin/observer/observer-events.log:/observer/observer-events.log:ro
+      - ${HOME}/.local/share/agents_memory_system/view:/state:ro
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on: [mm_docker_proxy]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen(u.Request('http://127.0.0.1:8080/', headers={'Host':'127.0.0.1'}), timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [mm_internal, stack]
+
+networks:
+  mm_internal:
+    internal: true
+  stack:
+    external: true
+    name: agents_memory_system_agents_memory_net
+
+volumes:
+  agents_graph_data:
+    external: true
+    name: agents_memory_system_agents_graph_data
+  agents_telemetry_raw:
+    external: true
+    name: agents_memory_system_agents_telemetry_raw
