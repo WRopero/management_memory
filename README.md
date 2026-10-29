@@ -6,7 +6,9 @@ Corre en `http://127.0.0.1:45876`, solo local.
 
 ## Cómo correrlo
 
-Requisitos: Docker Desktop corriendo y el stack de memoria arriba (`~/Documents/Developer/agents_memory_system`, ver `seed-bundle/`).
+Repositorio **público y sin secretos**: el `.env` (0600) se genera en cada Mac con `scripts/setup.py` y está en `.gitignore`.
+
+Requisitos: Docker Desktop corriendo y el stack de memoria arriba (`~/Documents/Developer/agents_memory_system`, ver `seed-bundle/`; ese repositorio es privado). El panel se conecta a ese stack, así que sin él no tiene nada que mostrar.
 
 ```bash
 cd ~/Documents/Developer/management_memory
@@ -57,4 +59,4 @@ La cuota restante de la suscripción no se puede consultar desde fuera.
 Un endpoint nuevo = una función en `app/` + una ruta en `app/main.py` + una página en `static/app.js` (`pages.<clave>`, y el menú `NAV`/`NAMES`). Mantén todo de solo lectura y los textos en lenguaje llano; añade los términos nuevos al `GLOSSARY`.
 
 ## Instalarlo en otro Mac
-Lo instala el seed bundle: `agents_memory_system/seed-bundle/seed.sh panel --yes`.
+Lo instala el seed bundle, que lo clona y lo levanta (fase 7 de `SEED.md`): `agents_memory_system/seed-bundle/seed.sh panel --yes`.
