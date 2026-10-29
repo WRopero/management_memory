@@ -1,3 +1,5 @@
+> **Este proyecto se mudó a [OpenMemory](https://github.com/WRopero/OpenMemory)** (carpeta `panel/`), donde se instala como parte del kit. Este repositorio queda archivado y sin cambios nuevos.
+
 # Management Memory
 
 Panel de control **interno y de solo lectura** para vigilar la memoria de proyecto (Cognee en Docker): salud de los servicios, qué vectores existen y dónde, grafo, PostgreSQL, tokens y costo (observer + OpenTelemetry), llamadas a la API, contenedores y tamaño de la base de conocimiento por proyecto (con avisos para decidir qué compactar o eliminar). No modifica nada.
